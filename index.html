@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Happy Birthday</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@600&family=Jost:wght@300;400;500&display=swap');
+
+  :root{
+    --blush-light:#fbeae6;
+    --blush-deep:#f0cec6;
+    --wine:#6b2737;
+    --rose:#c97b84;
+    --sage:#8a9a7b;
+    --sage-dark:#5f7052;
+    --gold:#c9a227;
+    --cream:#fff8f3;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html,body{
+    min-height:100%;
+    background: radial-gradient(ellipse at top, var(--blush-light), var(--blush-deep) 80%);
+    font-family:'Jost', sans-serif;
+    color:var(--wine);
+  }
+
+  .stage{
+    position:relative;
+    width:100%;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+
+  .petal{
+    position:absolute;
+    top:-5%;
+    width:12px; height:12px;
+    background:var(--rose);
+    opacity:0.5;
+    border-radius:0 100% 0 100%;
+    animation:fall linear infinite;
+    pointer-events:none;
+  }
+  @keyframes fall{ to{ transform: translateY(110vh) rotate(300deg); } }
+
+  .card-closed{
+    position:relative;
+    width:300px;
+    height:220px;
+    background:var(--cream);
+    border-radius:8px;
+    box-shadow:0 20px 45px rgba(107,39,55,0.28);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+    transition:opacity 0.4s ease, transform 0.4s ease;
+    border:1px solid var(--blush-deep);
+  }
+  .card-closed.hidden{ opacity:0; transform:scale(0.9); pointer-events:none; }
+
+  .card-closed .cover-text{
+    font-family:'Dancing Script', cursive;
+    font-size:1.7rem;
+    color:var(--wine);
+    text-align:center;
+  }
+  .prompt{
+    position:absolute;
+    bottom:-42px;
+    width:100%;
+    text-align:center;
+    letter-spacing:0.12em;
+    font-size:0.72rem;
+    text-transform:uppercase;
+    color:var(--wine);
+    opacity:0.6;
+    animation:pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:0.4;} 50%{opacity:0.85;} }
+
+  /* Pop-up scene: base card holds bouquet zone on top, text flowing below in normal document flow so nothing overlaps */
+  .pop-scene{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.5s ease;
+    z-index:10;
+    padding:2rem 1rem;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .pop-scene.visible{ opacity:1; pointer-events:auto; }
+
+  .base-card{
+    position:relative;
+    width:min(92vw, 560px);
+    max-height:none;
+    background:var(--cream);
+    border-radius:10px;
+    box-shadow:0 30px 60px rgba(107,39,55,0.32);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:56px;
+    padding-bottom:1rem;
+    overflow:visible;
+    margin:auto;
+  }
+
+  /* Reserved, fixed-height zone so the bouquet can visually pop above the card
+     without ever encroaching on the text that follows in flow below it */
+  .bouquet-zone{
+    position:relative;
+    width:100%;
+    height:150px;
+    display:flex;
+    justify-content:center;
+    z-index:5;
+  }
+
+  .bouquet{
+    position:absolute;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%) scale(0);
+    transform-origin:bottom center;
+    transition:transform 0.8s cubic-bezier(.2,1.4,.4,1) 0.25s;
+  }
+  .pop-scene.visible .bouquet{ transform:translateX(-50%) scale(1); }
+
+  .stem{
+    position:absolute;
+    bottom:0;
+    width:3px;
+    height:100px;
+    background:var(--sage-dark);
+    left:50%;
+    transform-origin:bottom center;
+  }
+
+  .flower{ position:absolute; }
+  .flower .petal-shape{
+    position:absolute;
+    width:18px; height:25px;
+    border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+    transform-origin:bottom center;
+  }
+  .flower .center{
+    position:absolute;
+    width:12px;height:12px;
+    border-radius:50%;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    background:var(--gold);
+    z-index:2;
+  }
+  .leaf{
+    position:absolute;
+    width:24px; height:13px;
+    background:var(--sage);
+    border-radius:0 100% 0 100%;
+  }
+
+  /* Text sits in normal flow, always below the bouquet zone -- guaranteed no overlap */
+  .text-panel{
+    position:relative;
+    width:100%;
+    padding:0.5rem 2.2rem 2.4rem;
+    text-align:center;
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity 0.6s ease 0.9s, transform 0.6s ease 0.9s;
+    z-index:1;
+  }
+  .pop-scene.visible .text-panel{ opacity:1; transform:translateY(0); }
+
+  .eyebrow{
+    font-family:'Dancing Script', cursive;
+    color:var(--rose);
+    font-size:1.35rem;
+    line-height:1.5;
+    margin-bottom:0.6rem;
+  }
+  h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:2.1rem;
+    line-height:1.15;
+    margin:0.3rem 0 1.2rem;
+    color:var(--wine);
+  }
+  .message{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:1rem;
+    line-height:1.6;
+    color:#4a1c28;
+    margin-bottom:0.95rem;
+    text-align:left;
+  }
+  .signoff{
+    font-family:'Dancing Script', cursive;
+    font-size:1.4rem;
+    line-height:1.5;
+    color:var(--rose);
+    margin-top:0.8rem;
+  }
+
+  .close-btn{
+    margin-top:1.2rem;
+    background:none;
+    border:1px solid var(--rose);
+    color:var(--wine);
+    padding:0.45rem 1.3rem;
+    border-radius:30px;
+    font-family:'Jost', sans-serif;
+    font-size:0.72rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:background 0.3s ease, color 0.3s ease;
+  }
+  .close-btn:hover{ background:var(--rose); color:var(--cream); }
+
+  @media (prefers-reduced-motion: reduce){
+    .petal{ display:none; }
+    .bouquet, .text-panel, .card-closed{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div id="petals"></div>
+  <div class="card-closed" id="cardClosed">
+    <div class="cover-text">Happy Birthday</div>
+    <div class="prompt">tap to open</div>
+  </div>
+</div>
+
+<div class="pop-scene" id="popScene">
+  <div class="base-card">
+
+    <div class="bouquet-zone">
+      <div class="bouquet" id="bouquet"></div>
+    </div>
+
+    <div class="text-panel">
+      <div class="eyebrow">Happy Birthday to you, Happy Birthday to my beautiful Victoria, Happy Birthday to you. ❤️🎂</div>
+      <h1>My Victoria</h1>
+      <p class="message">
+        I hope today reminds you of how deeply special you are not only to me, but simply as the person you are. You have such a beautiful heart, a warmth that stays with people, and a way of bringing life into the smallest moments. I hope this year gives you endless reasons to smile, laugh, dream, and feel truly loved.
+      </p>
+      <p class="message">
+        More than anything, I wish I could spend today with you. I wish I could be beside you, make you smile, take you somewhere beautiful, and celebrate your birthday the way we once imagined we would.
+      </p>
+      <p class="message">
+        Things between us may not be where I wished they were right now, but that could never erase what you mean to me or the memories we created together. Some people come into your life and leave a mark that time simply cannot remove. You are that person for me.
+      </p>
+      <p class="message">
+        No matter where life takes us, I will always root for you. I will always pray for your happiness, your peace, your success, and every dream your heart carries. I pray that God hears even the quietest prayers you never say out loud and blesses you with more than you ever thought to ask for  because you deserve beautiful things.
+      </p>
+      <p class="message">
+        I miss you, Victoria. I miss your smile, your presence, the little moments, the laughter, and even the ordinary days that somehow felt different because you were there.
+      </p>
+      <p class="message">
+        And despite everything we are going through, my feelings for you don't simply disappear. There is still so much love in my heart when I think of you. Maybe love sometimes means holding on, and sometimes it means giving someone the space they need while still quietly wishing them every happiness in the world.
+      </p>
+      <p class="message">
+        If you would allow me, I would still love nothing more than to take you out for your birthday dinner  not to make anything complicated, not to put any pressure on you, but simply because I would love the chance to celebrate you and see you smile on your special day. ❤️
+      </p>
+      <p class="message">
+        You will always hold a place in my heart that belongs only to you. You have been my princess, my queen, my best memories, and one of the most beautiful chapters of my life.
+      </p>
+      <p class="message">
+        I only wish we could be together today, celebrating the way we once planned. Maybe that is why today feels a little heavier for me  but more than my sadness, I want today to be about you, and how grateful I am that you were born.
+      </p>
+      <p class="message" style="font-style:normal; font-family:'Dancing Script', cursive; font-size:1.5rem; color:var(--rose); margin:0.4rem 0 1rem;">
+        Happy Birthday, Victoria. 👑❤️
+      </p>
+      <p class="message">
+        May your smile always shine. May your heart always remain full of life. May this new year bring you peace where you need it, happiness where you least expect it, and every beautiful thing your heart deserves.
+      </p>
+      <p class="message">
+        And wherever life takes us from here, please remember this: I loved you sincerely. I still care for you deeply. I will always want the best for you. And a part of my heart will always smile whenever it remembers us.
+      </p>
+      <p class="message">
+        I miss you more than I can put into words.
+      </p>
+      <div class="signoff">Happy Birthday, Victoria. ❤️<br>I truly wish I could be there with you today.</div>
+      <button class="close-btn" id="closeBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const petalContainer = document.getElementById('petals');
+  const petalColors = ['#c97b84', '#c9a227', '#f0cec6'];
+  for(let i=0;i<16;i++){
+    const p = document.createElement('div');
+    p.className = 'petal';
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.background = petalColors[Math.floor(Math.random()*petalColors.length)];
+    p.style.animationDuration = (8 + Math.random()*10) + 's';
+    p.style.animationDelay = (Math.random()*10) + 's';
+    p.style.opacity = 0.3 + Math.random()*0.4;
+    petalContainer.appendChild(p);
+  }
+
+  const bouquet = document.getElementById('bouquet');
+  const flowerColors = ['#c97b84', '#e8a5ad', '#f0cec6', '#b95a68'];
+  const layout = [
+    {x:-50, rot:-14, h:70,  scale:0.8},
+    {x:-24, rot:-6,  h:88,  scale:0.95},
+    {x:0,   rot:0,   h:100, scale:1.05},
+    {x:24,  rot:6,   h:88,  scale:0.95},
+    {x:50,  rot:14,  h:70,  scale:0.8},
+  ];
+
+  layout.forEach((cfg, i) => {
+    const stemWrap = document.createElement('div');
+    stemWrap.style.position = 'absolute';
+    stemWrap.style.left = `calc(50% + ${cfg.x}px)`;
+    stemWrap.style.bottom = '0';
+    stemWrap.style.transform = `rotate(${cfg.rot}deg)`;
+    stemWrap.style.transformOrigin = 'bottom center';
+
+    const stem = document.createElement('div');
+    stem.className = 'stem';
+    stem.style.height = cfg.h + 'px';
+    stem.style.left = '0';
+    stem.style.transform = 'translateX(-50%)';
+    stemWrap.appendChild(stem);
+
+    const leaf = document.createElement('div');
+    leaf.className = 'leaf';
+    leaf.style.bottom = (cfg.h*0.4) + 'px';
+    leaf.style.left = (i % 2 === 0 ? '-20px' : '2px');
+    leaf.style.transform = i % 2 === 0 ? 'rotate(20deg)' : 'rotate(-160deg)';
+    stemWrap.appendChild(leaf);
+
+    const flower = document.createElement('div');
+    flower.className = 'flower';
+    flower.style.bottom = cfg.h + 'px';
+    flower.style.left = '0';
+    flower.style.transform = `translateX(-50%) scale(${cfg.scale})`;
+
+    const color = flowerColors[i % flowerColors.length];
+    for(let p=0; p<6; p++){
+      const petal = document.createElement('div');
+      petal.className = 'petal-shape';
+      petal.style.background = color;
+      petal.style.left = '50%';
+      petal.style.top = '50%';
+      petal.style.transform = `translate(-50%,-100%) rotate(${p*60}deg)`;
+      flower.appendChild(petal);
+    }
+    const center = document.createElement('div');
+    center.className = 'center';
+    flower.appendChild(center);
+
+    stemWrap.appendChild(flower);
+    bouquet.appendChild(stemWrap);
+  });
+
+  const cardClosed = document.getElementById('cardClosed');
+  const popScene = document.getElementById('popScene');
+  const closeBtn = document.getElementById('closeBtn');
+
+  cardClosed.addEventListener('click', () => {
+    cardClosed.classList.add('hidden');
+    popScene.classList.add('visible');
+  });
+
+  closeBtn.addEventListener('click', () => {
+    popScene.classList.remove('visible');
+    setTimeout(() => cardClosed.classList.remove('hidden'), 300);
+  });
+</script>
+
+</body>
+</html>
